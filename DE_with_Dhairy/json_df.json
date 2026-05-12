@@ -1,0 +1,17 @@
+{
+ "Institute_Name" : "ABC_Coaching_Center",
+ "Course_type" : "Best_seller" ,
+ "branches" : [
+  {
+   "State" : "Maharashtra",
+   "City" : "Mumbai",
+   "address" : "XYZ"
+  },
+  {
+   "State" : "Gujrat",
+   "City" : "Surat",
+   "address" : "PQRX"
+  }
+ ],
+ "Head_Office_Contact" : 8787878787
+}
