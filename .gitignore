@@ -2,3 +2,4 @@ data/*.csv
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+data/song_listened/
