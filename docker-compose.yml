@@ -1,10 +1,9 @@
-version: '3'
-
 services:
 
   spark-master:
     image: apache/spark:3.5.0
     container_name: spark-master
+    hostname: spark-master
     command: >
       bash -c "
       /opt/spark/sbin/start-master.sh &&
