@@ -66,5 +66,6 @@ def write_song_listened():
 
 
 if __name__ == "__main__":
+    os.makedirs(OUT, exist_ok=True)
     write_songs()
     write_song_listened()
