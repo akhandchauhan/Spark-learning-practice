@@ -1,0 +1,19 @@
+{
+  "name": "PySpark standalone cluster + Spark UI",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": { "version": "17" }
+  },
+  "postCreateCommand": "pip install -r requirements.txt && (nohup python generate_songs_data.py > /tmp/generate_songs.log 2>&1 &)",
+  "postStartCommand": "bash .devcontainer/start-cluster.sh",
+  "forwardPorts": [8080, 8081, 8082, 4040],
+  "portsAttributes": {
+    "8080": { "label": "Spark Master UI", "onAutoForward": "notify" },
+    "8081": { "label": "Worker 1 UI", "onAutoForward": "silent" },
+    "8082": { "label": "Worker 2 UI", "onAutoForward": "silent" },
+    "4040": { "label": "Spark App UI (driver)", "onAutoForward": "notify" }
+  },
+  "customizations": {
+    "vscode": { "extensions": ["ms-python.python", "ms-toolsai.jupyter"] }
+  }
+}
