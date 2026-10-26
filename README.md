@@ -47,7 +47,7 @@ The 4040 UI only responds while the SparkSession is alive.
 |---|---|
 | 8080 shows fewer than 2 workers | Run `bash .devcontainer/start-cluster.sh`. It starts only the missing master/workers and prints the worker count. Logs: `tail /tmp/spark-logs/*.log` |
 | First cell prints `1` or `2`, not `3` | Executors are still starting. Re-run the line after a few seconds. If it stays low, check 8080 for 2 alive workers. |
-| Notebook can't find `data/...` | The generator is still running. Wait for the `song_listened: ... GB` line in `/tmp/generate_songs.log`. |
+| Notebook can't find `data/...` | If `pgrep -f generate_songs_data.py` shows it, wait for `song_listened: ... GB` in `/tmp/generate_songs.log`. If no process and no `data/`, run `python generate_songs_data.py` |
 | 4040 won't load | Run the first cell first. If a second session is running, it moves to 4041; check `spark.sparkContext.uiWebUrl`. |
 | Everything is slow | Driver, master and both workers share one VM. Use a 4-core Codespace machine type. |
 

@@ -4,7 +4,7 @@
   "features": {
     "ghcr.io/devcontainers/features/java:1": { "version": "17" }
   },
-  "postCreateCommand": "pip install -r requirements.txt && (nohup python generate_songs_data.py > /tmp/generate_songs.log 2>&1 &)",
+  "postCreateCommand": "pip install -r requirements.txt && (setsid nohup python generate_songs_data.py > /tmp/generate_songs.log 2>&1 < /dev/null &)",
   "postStartCommand": "bash .devcontainer/start-cluster.sh",
   "forwardPorts": [8080, 8081, 8082, 4040],
   "portsAttributes": {
