@@ -31,7 +31,7 @@ The session asks for `spark.executor.cores=1` and `spark.cores.max=2`. Each work
 
    The `.devcontainer/` config installs Python 3.11, Java 17 and `requirements.txt` (PySpark 3.5.0). It starts the master and 2 workers, then generates the datasets in the background.
 2. Wait for the data. Run `tail -f /tmp/generate_songs.log` and wait for `song_listened: ... GB` (about 5-10 min, ~2.4 GB).
-3. Check the cluster. In the **Ports** tab, click the globe icon on **8080**. It should show **Alive Workers: 2**.
+3. Check the cluster. Run `bash .devcontainer/start-cluster.sh`. It is safe to re-run and should print `Spark workers running: 2`. Then, in the **Ports** tab, click the globe icon on **8080**. It should show **Alive Workers: 2**.
 4. Open `dynamic_partition_pruning.ipynb`. In the kernel picker, choose **Python 3.11**. If prompted, accept **Install/Enable suggested extensions**.
 5. Run the first cell. It starts the driver and connects to `spark://localhost:7077`.
 6. Verify you have **1 driver + 2 executors**:
@@ -45,7 +45,7 @@ The 4040 UI only responds while the SparkSession is alive.
 
 | Symptom | Fix |
 |---|---|
-| 8080 shows 0 workers | Run `tail /tmp/spark-logs/*.log`. To restart: `pkill -f org.apache.spark.deploy; bash .devcontainer/start-cluster.sh` |
+| 8080 shows fewer than 2 workers | Run `bash .devcontainer/start-cluster.sh`. It starts only the missing master/workers and prints the worker count. Logs: `tail /tmp/spark-logs/*.log` |
 | First cell prints `1` or `2`, not `3` | Executors are still starting. Re-run the line after a few seconds. If it stays low, check 8080 for 2 alive workers. |
 | Notebook can't find `data/...` | The generator is still running. Wait for the `song_listened: ... GB` line in `/tmp/generate_songs.log`. |
 | 4040 won't load | Run the first cell first. If a second session is running, it moves to 4041; check `spark.sparkContext.uiWebUrl`. |
