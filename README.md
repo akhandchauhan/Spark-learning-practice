@@ -22,16 +22,6 @@ Troubleshooting: master/worker logs are in `/tmp/spark-logs/`. To restart the cl
 
 All three "nodes" are processes in one Codespace VM, so they share its CPU and memory. Use a 4-core machine type for comfortable runs.
 
-## Quick start (local)
-
-```bash
-pip install -r requirements.txt   # needs Java 17+ on PATH
-python generate_songs_data.py     # writes data/songs.csv and data/song_listened/
-jupyter notebook                  # use .master("local[2]") in the session cell
-```
-
-Spark UI is at `http://localhost:4040` while a session is running.
-
 ## What's in here
 
 | Path | Purpose |
