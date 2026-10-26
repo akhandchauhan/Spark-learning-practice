@@ -2,37 +2,67 @@
 
 Hands-on PySpark practice for core Spark internals: caching/persistence, join mechanics, dynamic partition pruning, and processing at non-trivial scale (1M+ row and multi-GB synthetic datasets). Two learning tracks: Ankit Bansal's PySpark course and DE with Dhairy.
 
-## Quick start (GitHub Codespaces)
+Runs in **GitHub Codespaces** as a Spark standalone cluster with **1 driver + 2 executors**, all with visible UIs. No docker needed.
 
-1. **Code** -> **Codespaces** -> **Create codespace on main**. The `.devcontainer/` config installs Python 3.11, Java 17 and `requirements.txt` (PySpark 3.5.0), starts a standalone cluster (1 master + 2 workers, no docker), and generates the datasets in the background (~5-10 min, ~2.4 GB).
-2. Check progress: `tail -f /tmp/generate_songs.log`. It prints `song_listened: ... GB` when done.
-3. Open `dynamic_partition_pruning.ipynb`, click the kernel picker and select the **Python 3.11** interpreter. If the Jupyter extension isn't active, accept **Install/Enable suggested extensions**.
-4. Run the first cell. The notebook kernel is the **driver**; it connects to `spark://localhost:7077`.
-5. Open the UIs from the **Ports** tab (globe icon):
+## Cluster layout
 
-| Port | UI | Shows |
-|---|---|---|
-| 8080 | Spark Master UI | 2 alive workers, running applications |
-| 8081, 8082 | Worker 1, Worker 2 | Executors running on each worker |
-| 4040 | Spark App UI (driver) | Jobs, Stages, SQL, **Executors** tab (driver + 2 executors) |
+```
+Codespace (one VM)
+├── Driver      = notebook kernel (Python 3.11)     -> UI :4040
+├── Master      spark://localhost:7077              -> UI :8080
+├── Worker 1 -> Executor 1  (1 core, 1g)            -> UI :8081
+└── Worker 2 -> Executor 2  (1 core, 1g)            -> UI :8082
+```
 
-The 4040 UI only responds while a SparkSession is alive. If it moves to 4041, check `spark.sparkContext.uiWebUrl`.
+| Component | Where it runs | Started by | Where to see it |
+|---|---|---|---|
+| Driver | Notebook kernel | Running the notebook's first cell | Port **4040**, Executors tab, row `driver` |
+| Executor 1 | Worker 1 | Driver requests it from the master | Port **4040**, Executors tab, row `0`; port **8081** |
+| Executor 2 | Worker 2 | Driver requests it from the master | Port **4040**, Executors tab, row `1`; port **8082** |
+| Master | Codespace background process | `.devcontainer/start-cluster.sh` on every Codespace start | Port **8080** |
 
-Troubleshooting: master/worker logs are in `/tmp/spark-logs/`. To restart the cluster: `pkill -f org.apache.spark.deploy; bash .devcontainer/start-cluster.sh`.
+The session asks for `spark.executor.cores=1` and `spark.cores.max=2`. Each worker has 1 core, so the driver gets exactly one executor per worker.
 
-All three "nodes" are processes in one Codespace VM, so they share its CPU and memory. Use a 4-core machine type for comfortable runs.
+## Run it in Codespaces
+
+1. Create or rebuild the Codespace:
+   - New: on GitHub, **Code** -> **Codespaces** -> **Create codespace on main**.
+   - Existing: run `git pull`, then press F1 and choose **Codespaces: Rebuild Container**.
+
+   The `.devcontainer/` config installs Python 3.11, Java 17 and `requirements.txt` (PySpark 3.5.0). It starts the master and 2 workers, then generates the datasets in the background.
+2. Wait for the data. Run `tail -f /tmp/generate_songs.log` and wait for `song_listened: ... GB` (about 5-10 min, ~2.4 GB).
+3. Check the cluster. In the **Ports** tab, click the globe icon on **8080**. It should show **Alive Workers: 2**.
+4. Open `dynamic_partition_pruning.ipynb`. In the kernel picker, choose **Python 3.11**. If prompted, accept **Install/Enable suggested extensions**.
+5. Run the first cell. It starts the driver and connects to `spark://localhost:7077`.
+6. Verify you have **1 driver + 2 executors**:
+   - The first cell prints `3` (1 driver + 2 executors).
+   - On port **4040**, the **Executors** tab lists `driver`, `0` and `1`.
+   - On port **8080**, under **Running Applications**, `dynamic_partition_pruning` uses 2 cores.
+
+The 4040 UI only responds while the SparkSession is alive.
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| 8080 shows 0 workers | Run `tail /tmp/spark-logs/*.log`. To restart: `pkill -f org.apache.spark.deploy; bash .devcontainer/start-cluster.sh` |
+| First cell prints `1` or `2`, not `3` | Executors are still starting. Re-run the line after a few seconds. If it stays low, check 8080 for 2 alive workers. |
+| Notebook can't find `data/...` | The generator is still running. Wait for the `song_listened: ... GB` line in `/tmp/generate_songs.log`. |
+| 4040 won't load | Run the first cell first. If a second session is running, it moves to 4041; check `spark.sparkContext.uiWebUrl`. |
+| Everything is slow | Driver, master and both workers share one VM. Use a 4-core Codespace machine type. |
 
 ## What's in here
 
 | Path | Purpose |
 |---|---|
-| `.devcontainer/` (`devcontainer.json`, `start-cluster.sh`), `requirements.txt` | One-click Codespaces environment: Python 3.11, Java 17, PySpark 3.5.0, standalone master + 2 workers, forwarded UI ports |
+| `.devcontainer/devcontainer.json` | Codespaces environment: Python 3.11, Java 17, forwarded ports 8080/8081/8082/4040 |
+| `.devcontainer/start-cluster.sh` | Starts the master and 2 workers (1 core, 1g each); logs in `/tmp/spark-logs/` |
+| `requirements.txt` | PySpark 3.5.0 and the data generator's dependencies |
 | `dynamic_partition_pruning.ipynb` | DPP demo: fact table partitioned by `listen_date` joined to a filtered date dimension |
 | `generate_songs_data.py` | Generates `data/songs.csv` (~100 MB) and `data/song_listened/` (~2.4 GB parquet, 731 `listen_date=` partitions) |
 | `generate_1_mn_rows.py` | Generates a synthetic ~1M-row orders CSV |
 | `cache_vs_persist.ipynb` | `.cache()` vs `.persist()` storage levels |
 | `Ankit_Bansal_pyspark_course_practice/`, `DE_with_Dhairy/` | Dated lecture notebooks: joins, partitioning, Spark SQL |
-| `docker-compose.yml` | Optional docker version of the cluster (master, 2 workers, Jupyter). Heavier (~2.5 GB of images); not needed in Codespaces |
 
 ## Datasets
 
@@ -41,12 +71,4 @@ All three "nodes" are processes in one Codespace VM, so they share its CPU and m
 | `data/songs.csv` | `song_id`, `title`, `artist`, `album`, `genre`, `duration_sec`, `release_year` |
 | `data/song_listened/listen_date=YYYY-MM-DD/` | `listen_id`, `user_id`, `song_id`, `listened_at`, `listen_duration_sec`, `device`, `country`, `session_id` (+ `listen_date` from the folder) |
 
-`song_listened.song_id` references `songs.song_id`. Generated data is gitignored; regenerate with the scripts above.
-
-## Optional: docker-compose cluster
-
-```bash
-docker compose up -d
-```
-
-Master UI on 8080, Jupyter on 8888, app UI on 4040. The repo is mounted at `/data` in every container, so data paths become `/data/data/...` and the session must use `.master("spark://spark-master:7077")`. Run the notebook from the Jupyter container's kernel (`http://localhost:8888`), not the Codespace's Python.
+`song_listened.song_id` references `songs.song_id`. Generated data is gitignored; the Codespace regenerates it on creation.
